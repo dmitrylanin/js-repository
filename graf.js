@@ -1,4 +1,4 @@
-    /*
+       /*
         конструтор графа - принимает массив массивов парных чисел;
         выдает объект, где каждая вернаши графа - отдельный объект с двумя свойствами:
             - имя вершины
@@ -13,6 +13,8 @@
         let gr = Graf([[0, 3], [1, 3], [2, 3], [4, 3], [5, 4]])
 
         searchDeep(gr) - выдает массив со списком вершин графа
+
+        searchWidth(gr) - обход графа в ширину
 
     */
 
@@ -100,10 +102,7 @@ function searchDeep(obj){
 
     for(let key in obj){
         roll = obj[key]; 
-        let proxyArr = []; 
-        proxyArr.push(roll.value)
-
-        searched = smartMix(searched, proxyArr); 
+        searched = smartMix(searched, [].push(roll.value)); 
         searchedChild = deepDeep(roll.partners); 
 
         searched = smartMix(searched, searchedChild)
@@ -128,6 +127,8 @@ function deepDeep(arr){
     return proxyCalculated; 
 
 }
+
+
     /*
         функция принимает два массива "куда" и "что"
         проверяет, если элемента массива "что" нет в массиве "куда", то добавляет новый элемент
@@ -138,11 +139,39 @@ function deepDeep(arr){
 function smartMix(where, what){
    
     for(let i=0; i<what.length; i++){
-        let z = what[i]; 
-        if(where.indexOf(z) == -1){
-            where.push(z); 
+        if(where.indexOf(what[i]) == -1){
+            where.push(what[i]); 
         }
     }
 
     return where; 
 }
+
+    /*
+        поиск в ширину
+        Функция обходит объект графа и смотрит, сколько дочерних вершин у каждой вершины, на выходе указывает
+        в какую вершину из какой можно прийти
+    */
+function searchWidth(obj){
+    let listOfRoute = []; 
+
+    for(key in obj){
+        let roll = obj[key]; 
+
+        if(roll.partners.length==1){
+            listOfRoute.push("Из вершины " + roll.value + " можно прийти в вершину " + roll.partners[0].value); 
+        }else if(roll.partners.length>1){
+            let str = "Из вершины " + roll.value + " можно прийти в вершины ";
+            let map = "";
+            for(let i=0; i<roll.partners.length; i++){
+                map += roll.partners[i].value + ", "
+            }
+             map = map.substring(0, map.length-2); 
+             str = str + map + "."
+             listOfRoute.push(str); 
+        }
+    }
+
+    return listOfRoute; 
+} 
+
