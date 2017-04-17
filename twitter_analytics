@@ -1,0 +1,110 @@
+    function Place(country, city) {
+        this.country = country;
+        this.city = city;
+        this.placeIndex = 0;
+    };
+
+    function PopularUser(nickName, followers) {
+        this.nickName = nickName;
+        this.followers = followers;
+    };
+
+    function PopularTweet(nickName, tweetContent, rts) {
+        this.nickName = nickName;
+        this.tweetContent = tweetContent;
+        this.retweets = rts;
+    };
+
+    const authorsMap = new Map();
+    const tweetsMap = new Map();
+    const citysMap = new Map();
+
+
+    const data = [];
+
+    const LineByLineReader = require("line-by-line"),
+        lr = new LineByLineReader("./input/dataSet.csv");
+
+
+    lr.on('error', function (err) {
+        // 'err' contains error object
+    });
+
+    lr.on('line', function (line) {
+        // 'line' contains the current line without the trailing newline character.
+
+        lr.pause();
+        data.push(line.split(";"));
+        for(let i = 2; i< data.length; i++){
+            let proxyLine = data[i];
+            let [tweetId, date, hour, userName, nickName, bio, tweetContent, favs, rts, latitude, longitude, country, city, avatar, followers, following, listed, tweetLang, tweetUrl] = proxyLine;
+
+            //собираем статистику по самым популярным авторам; самый популярный тот, у кого фолловеров больше
+            if(nickName != undefined && followers != undefined && !authorsMap.has(nickName)) {
+                let author = new PopularUser(nickName, followers);
+                authorsMap.set(nickName, author);
+            };
+
+            //собираем статистику по самым популярным твитам; самый популярный тот, у которого ретвитов больше;
+            if(!tweetsMap.has(tweetContent)){
+                let tweet = new PopularTweet(nickName, tweetContent, rts);
+                tweetsMap.set(tweetContent, tweet);
+            };
+
+            //собираем статистику по самым активным городам; количество твитов, сделанных в одном городе записывается в свойство placeIndex;
+            if(citysMap.has(city)){
+                citysMap.get(city).placeIndex = citysMap.get(city).placeIndex +1;
+            }else if(country != undefined && city != undefined && city != ";" && city !="" && country !="" && country !=";"){
+                let place = new Place(country, city);
+                citysMap.set(city, place)
+            }
+        }
+
+        setTimeout(function () {
+            lr.resume();
+        }, 100);
+
+        setTimeout(function () {
+            analytics(authorsMap, tweetsMap)
+        }, 5000)
+    });
+
+    lr.on('end', function () {
+        console.log('Вот и хватит');
+    });
+
+    function analytics(authorsCollections, tweetsCollection) {
+
+        let maxU = 0;
+        let maxyMan;
+
+        for(let user of authorsCollections.values()) {
+            if(user.followers*1 > maxU*1){
+                maxyMan = user;
+                maxU = maxyMan.followers;
+            }
+        };
+
+        let maxT = 0;
+        let maxyTweet;
+        for(let tweet of tweetsCollection.values()) {
+            if(tweet.retweets*1 >maxT*1){
+                maxyTweet = tweet;
+                maxT = maxyTweet.retweets;
+            }
+        };
+
+        let maxI = 0;
+        let maxyCity;
+        for(let city of citysMap.values()) {
+            if(city.placeIndex*1 >maxI*1){
+                maxI = city.placeIndex*1;
+                maxyCity = city;
+            }
+        };
+
+        console.log("Самый популярный пользователь Твиттера - " + maxyMan.nickName + "; за ним следят " + maxyMan.followers + " пользователей.");
+        console.log("Самый популярный Твит - " + maxyTweet.tweetContent + "; его перепостили " + maxyTweet.retweets + " раз.");
+        console.log("Самый твитящий город - " + maxyCity.city + " из " + maxyCity.country +"; в 'этом городе твитят " + maxyCity.placeIndex +" пользователей");
+        console.log();
+    };
